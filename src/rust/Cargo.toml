@@ -9,4 +9,4 @@ crate-type = [ 'staticlib' ]
 name = 'helloextendr'
 
 [dependencies]
-extendr-api = '*'
+extendr-api = { git = "https://github.com/Ilia-Kosenkov/extendr/", branch = "prototype/Ellipsis"}
