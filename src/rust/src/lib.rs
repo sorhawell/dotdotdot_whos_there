@@ -148,6 +148,10 @@ impl List2PromiseIter {
         .collect()
     }
 
+    pub fn takable_promises(self) -> Result<Vec<Option<NamedPromise>>> {
+        self.map(|x| Some(x).transpose()).collect()
+    }
+
     /// eval promises and return EllipisValue
     ///
     /// This method will instantly throw any eval error in R.
@@ -235,6 +239,29 @@ impl Drop for CheckMemRelease {
     }
 }
 
+/// @export
+#[extendr(use_try_from = true)]
+fn take_fifth_promise(#[ellipsis] dots: Ellipsis) -> Robj {
+    let _ = CheckMemRelease::new();
+    //get vector Named Promises
+    let mut takable_promises = List2PromiseIter::new(dots.iter())
+        .takable_promises()
+        .expect("no syntax errors in any arg");
+
+    let named_promise = takable_promises
+        .get_mut(5)
+        .expect("has at least 5+1 elements")
+        .take()
+        .expect("not already taken");
+
+    let robj = trycatch_promise(named_promise.promise).expect("no eval error");
+    let name = named_promise.name;
+
+    rprintln!("fifth value was {robj:?} and had arg name {name:?}");
+
+    robj
+}
+
 // Macro to generate exports.
 // This ensures exported functions are registered with R.
 // See corresponding C code in `entrypoint.c`.
@@ -246,4 +273,5 @@ extendr_module! {
     fn eval_dots;
     fn collect_dots;
     fn hello_world;
+    fn take_fifth_promise;
 }

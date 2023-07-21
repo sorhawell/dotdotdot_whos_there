@@ -31,5 +31,8 @@ collect_dots <- function(...) .Call(wrap__collect_dots, environment())
 #' @export
 hello_world <- function() .Call(wrap__hello_world)
 
+#' @export
+take_fifth_promise <- function(...) .Call(wrap__take_fifth_promise, environment())
+
 
 # nolint end
