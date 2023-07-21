@@ -11,7 +11,19 @@
 #' @useDynLib helloextendr, .registration = TRUE
 NULL
 
-collect_dots <- function(x, ..., y) .Call(wrap__collect_dots, x, environment(), y)
+#' @export
+iter_dots <- function(...) invisible(.Call(wrap__iter_dots, environment()))
+
+#' @export
+trycatch_dots <- function(...) .Call(wrap__trycatch_dots, environment())
+
+trycatch_dots_result <- function(...) .Call(wrap__trycatch_dots_result, environment())
+
+#' @export
+eval_dots <- function(...) .Call(wrap__eval_dots, environment())
+
+#' @export
+collect_dots <- function(...) .Call(wrap__collect_dots, environment())
 
 #' Return string `"Hello world!"` to R.
 #' @export

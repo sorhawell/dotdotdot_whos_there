@@ -8,5 +8,6 @@ edition = '2021'
 crate-type = [ 'staticlib' ]
 name = 'helloextendr'
 
+
 [dependencies]
-extendr-api = { git = "https://github.com/Ilia-Kosenkov/extendr/", branch = "prototype/Ellipsis"}
+extendr-api = { path = "../../../extendr_rpolars/extendr-api"}

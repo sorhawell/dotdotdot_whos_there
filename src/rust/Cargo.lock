@@ -5,7 +5,6 @@ version = 3
 [[package]]
 name = "extendr-api"
 version = "0.4.0"
-source = "git+https://github.com/Ilia-Kosenkov/extendr/?branch=prototype/Ellipsis#8e4d9651e452f1de819d7065ce72f77c82bc6494"
 dependencies = [
  "extendr-engine",
  "extendr-macros",
@@ -17,7 +16,6 @@ dependencies = [
 [[package]]
 name = "extendr-engine"
 version = "0.4.0"
-source = "git+https://github.com/Ilia-Kosenkov/extendr/?branch=prototype/Ellipsis#8e4d9651e452f1de819d7065ce72f77c82bc6494"
 dependencies = [
  "libR-sys",
 ]
@@ -25,7 +23,6 @@ dependencies = [
 [[package]]
 name = "extendr-macros"
 version = "0.4.0"
-source = "git+https://github.com/Ilia-Kosenkov/extendr/?branch=prototype/Ellipsis#8e4d9651e452f1de819d7065ce72f77c82bc6494"
 dependencies = [
  "proc-macro2",
  "quote",
