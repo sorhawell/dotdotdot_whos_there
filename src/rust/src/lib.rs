@@ -1,5 +1,4 @@
 use extendr_api::ellipsis::EllipsisIter;
-use extendr_api::ellipsis::EllipsisIterItem;
 use extendr_api::ellipsis::EllipsisValue;
 use extendr_api::prelude::*;
 use extendr_api::MissingArgId;
@@ -59,34 +58,40 @@ fn trycatch_promise(p: Promise) -> Result<Robj> {
 
 // COMMENT: I GUESS MOST USERS JUST WANNER ITERATE OVER SYNATIC VALID NAMES AND PROMISES
 #[derive(Debug)]
-pub struct EllipsisNamedPromise {
+pub struct NamedPromise {
     name: Option<String>,
     promise: Promise,
 }
 
 // Implement NamePromiseIterator
 #[derive(Clone)]
-pub struct NamedPromiseIter {
+pub struct List2PromiseIter {
     ei: EllipsisIter,
     arg_idx: usize,
 }
-impl NamedPromiseIter {
+impl List2PromiseIter {
     pub fn new(ei: EllipsisIter) -> Self {
-        NamedPromiseIter { ei, arg_idx: 0 }
+        List2PromiseIter { ei, arg_idx: 0 }
     }
 }
-impl From<EllipsisIter> for NamedPromiseIter {
+impl From<EllipsisIter> for List2PromiseIter {
     fn from(ei: EllipsisIter) -> Self {
         Self::new(ei)
     }
 }
-impl Default for NamedPromiseIter {
+impl Default for List2PromiseIter {
     fn default() -> Self {
-        NamedPromiseIter::new(EllipsisIter::new())
+        List2PromiseIter::new(EllipsisIter::new())
     }
 }
-impl Iterator for NamedPromiseIter {
-    type Item = Result<EllipsisNamedPromise>;
+
+/// Iterate according to rlang::list2 syntax rules over a ... args.
+/// Item Ok a syntactic valid arg as NamedPromise
+/// Iter Err a syntatic invalid arg as an error Value
+/// any valid trailing arg is ignored as if it were not there. Hence it makes
+/// no difference if there is a trialing comma or nor.
+impl Iterator for List2PromiseIter {
+    type Item = Result<NamedPromise>;
     fn next(&mut self) -> Option<Self::Item> {
         self.ei
             .next()
@@ -97,7 +102,7 @@ impl Iterator for NamedPromiseIter {
 
                 // get promise or check if missing is valid
                 match ellipsis_iter_item.value.to_promise() {
-                    Some(promise) => Some(Ok(EllipsisNamedPromise {
+                    Some(promise) => Some(Ok(NamedPromise {
                         name: opt_name,
                         promise,
                     })),
@@ -126,13 +131,13 @@ impl Iterator for NamedPromiseIter {
     }
 }
 
-// COMMENT HIGH LEVEL  methods
-impl NamedPromiseIter {
+/// High Level imlpementations for List2PromiseIter. These Allow to get values
+impl List2PromiseIter {
     /// Evaluate promises in R and return Ok vector of EllipsisValue if no errors
     /// if any first eval error immeditaly return Err the caught R error condition.
     pub fn trycatch_values(self) -> Result<Vec<EllipsisValue>> {
-        self.map(|np_res: Result<EllipsisNamedPromise>| {
-            np_res.and_then(|np: EllipsisNamedPromise| {
+        self.map(|np_res: Result<NamedPromise>| {
+            np_res.and_then(|np: NamedPromise| {
                 trycatch_promise(np.promise).map(|ok_robj| EllipsisValue {
                     name: np.name,
                     value: ok_robj,
@@ -148,8 +153,8 @@ impl NamedPromiseIter {
     /// This method will instantly throw any eval error in R.
     /// BEWARE: INSTANTLY THROWN ERRORS CANNOT BE CAUGHT AGAIN.
     pub fn eval_values(self) -> Result<Vec<EllipsisValue>> {
-        self.map(|np_res: Result<EllipsisNamedPromise>| {
-            np_res.and_then(|np: EllipsisNamedPromise| {
+        self.map(|np_res: Result<NamedPromise>| {
+            np_res.and_then(|np: NamedPromise| {
                 //some instanciation of
                 np.promise.eval().map(|ok_robj| EllipsisValue {
                     name: np.name,
@@ -161,20 +166,21 @@ impl NamedPromiseIter {
     }
 }
 
+///use example use Lit2PromiseIter in a for lopp
 /// @export
 #[extendr(use_try_from = true)]
 fn iter_dots(#[ellipsis] dots: Ellipsis) {
     let _ = CheckMemRelease::new();
-    for i in NamedPromiseIter::new(dots.iter()) {
+    for i in List2PromiseIter::new(dots.iter()) {
         match i {
             Ok(x) => {
-                rprintln!("valid EllipsisNamedPromise: {x:?}");
+                rprintln!("valid: {x:?}");
             }
             Err(Error::NonTrailingMissingArg(x)) => {
                 rprintln!("oups ... only allow trailing missing args: {x:?}");
             }
             Err(x) => {
-                rprintln!("another error surprisingly happended {x:?}");
+                rprintln!("another error very surprisingly happended {x:?}");
             }
         };
     }
@@ -184,14 +190,15 @@ fn iter_dots(#[ellipsis] dots: Ellipsis) {
 #[extendr(use_try_from = true)]
 fn trycatch_dots(#[ellipsis] dots: Ellipsis) -> Result<List> {
     let _ = CheckMemRelease::new();
-    let res: Result<Vec<EllipsisValue>> = NamedPromiseIter::new(dots.iter()).trycatch_values();
+    let res: Result<Vec<EllipsisValue>> = List2PromiseIter::new(dots.iter()).trycatch_values();
     res.map(|x| List::from_pairs(x.into_iter()))
 }
 
+/// @export
 #[extendr(use_try_from = true)]
 fn trycatch_dots_result(#[ellipsis] dots: Ellipsis) -> List {
     let _ = CheckMemRelease::new();
-    let res: Result<Vec<EllipsisValue>> = NamedPromiseIter::new(dots.iter()).trycatch_values();
+    let res: Result<Vec<EllipsisValue>> = List2PromiseIter::new(dots.iter()).trycatch_values();
     let res = res
         .map(|x| List::from_pairs(x.into_iter()))
         .map_err(|err| error_to_robj(err));
@@ -202,7 +209,7 @@ fn trycatch_dots_result(#[ellipsis] dots: Ellipsis) -> List {
 #[extendr(use_try_from = true)]
 fn eval_dots(#[ellipsis] dots: Ellipsis) -> Result<List> {
     let _ = CheckMemRelease::new();
-    let res: Result<Vec<EllipsisValue>> = NamedPromiseIter::new(dots.iter()).eval_values();
+    let res: Result<Vec<EllipsisValue>> = List2PromiseIter::new(dots.iter()).eval_values();
     res.map(|x| List::from_pairs(x.into_iter()))
 }
 

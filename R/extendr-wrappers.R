@@ -11,12 +11,14 @@
 #' @useDynLib helloextendr, .registration = TRUE
 NULL
 
+#'use example use Lit2PromiseIter in a for lopp
 #' @export
 iter_dots <- function(...) invisible(.Call(wrap__iter_dots, environment()))
 
 #' @export
 trycatch_dots <- function(...) .Call(wrap__trycatch_dots, environment())
 
+#' @export
 trycatch_dots_result <- function(...) .Call(wrap__trycatch_dots_result, environment())
 
 #' @export
