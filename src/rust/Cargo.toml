@@ -10,4 +10,5 @@ name = 'helloextendr'
 
 
 [dependencies]
-extendr-api = { path = "../../../extendr_rpolars/extendr-api"}
+#extendr-api = { path = "../../../extendr_rpolars/extendr-api"}
+extendr-api = { git = "https://github.com/Ilia-Kosenkov/extendr/", branch = "prototype/Ellipsis"}
